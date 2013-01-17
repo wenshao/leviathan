@@ -2,12 +2,12 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.daydayup</groupId>
-	<artifactId>lib-nio</artifactId>
+	<groupId>com.alibaba</groupId>
+	<artifactId>leviathan</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
 	<packaging>pom</packaging>
-	<name>lib-nio</name>
+	<name>leviathan</name>
 
 	<modules>
 		<module>server</module>
