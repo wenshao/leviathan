@@ -16,13 +16,14 @@ import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
 import com.alibaba.study.message.codec.XDecoder;
 import com.alibaba.study.message.codec.XEncoder;
 
-public class XServer {
+public class XServer implements XServerMBean {
 
     private static Log                    LOG               = LogFactory.getLog(XServer.class);
 
@@ -30,12 +31,14 @@ public class XServer {
     private ThreadPoolExecutor            bossExecutor;
     private ThreadPoolExecutor            workerExecutor;
 
-    private int                           bossThreadCount   = Runtime.getRuntime().availableProcessors();
     private int                           workerThreadCount = Runtime.getRuntime().availableProcessors();
 
     private NioServerSocketChannelFactory channelFactory;
 
-    private final AtomicLong              acceptCount       = new AtomicLong();
+    private final AtomicLong              acceptedCount     = new AtomicLong();
+    private final AtomicLong              closedCount       = new AtomicLong();
+    private final AtomicLong              sessionCount      = new AtomicLong();
+    private final AtomicLong              runningMax        = new AtomicLong();
 
     public void start() {
         bossExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
@@ -51,7 +54,7 @@ public class XServer {
             public ChannelPipeline getPipeline() throws Exception {
                 return Channels.pipeline(new XEncoder(), //
                                          new XDecoder(), //
-                                         new NettyAcceptorHandler() //
+                                         new NettyServerHanlder() //
                 );
             }
 
@@ -68,28 +71,23 @@ public class XServer {
         }
     }
 
-    public static void main(String args[]) throws Exception {
-        XServer server = new XServer();
-        server.start();
-    }
-
-    private final class NettyServerPipelineFactory implements ChannelPipelineFactory {
-
-        public ChannelPipeline getPipeline() throws Exception {
-            acceptCount.incrementAndGet();
-            ChannelPipeline pipeLine = Channels.pipeline(new NettyServerHanlder());
-            return pipeLine;
-        }
-    }
-
     public class NettyServerHanlder extends SimpleChannelUpstreamHandler {
 
         public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) {
+            acceptedCount.incrementAndGet();
+            incrementSessionCount();
 
+            if (LOG.isDebugEnabled()) {
+                Channel channel = ctx.getChannel();
+                LOG.debug("accepted " + channel.getRemoteAddress());
+            }
             ctx.sendUpstream(e);
         }
 
         public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+            closedCount.incrementAndGet();
+            decrementSessionCount();
+
             ctx.sendUpstream(e);
         }
 
@@ -100,17 +98,45 @@ public class XServer {
         public void channelUnbound(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
             ctx.sendUpstream(e);
         }
+        
+        public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+            ctx.sendUpstream(e);
+        }
     }
-
-    class NettyAcceptorHandler extends SimpleChannelUpstreamHandler {
-
-        public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) {
-            acceptCount.incrementAndGet();
-
-            if (LOG.isDebugEnabled()) {
-                Channel channel = ctx.getChannel();
-                LOG.debug("accepted " + channel.getRemoteAddress());
+    
+    void decrementSessionCount() {
+        this.sessionCount.decrementAndGet();
+    }
+    
+    void incrementSessionCount() {
+        long current = this.sessionCount.incrementAndGet();
+        for (;;) {
+            long max = this.runningMax.get();
+            if (current > max) {
+                boolean success = this.runningMax.compareAndSet(max, current);
+                if (success) {
+                    break;
+                }
+            } else {
+                break;
             }
         }
+    }
+    
+    public long getSessionCount() {
+        return sessionCount.get();
+    }
+
+    public long getClosedCount() {
+        return this.closedCount.get();
+    }
+
+    public long getAcceptedCount() {
+        return this.acceptedCount.get();
+    }
+
+    public static void main(String args[]) throws Exception {
+        XServer server = new XServer();
+        server.start();
     }
 }

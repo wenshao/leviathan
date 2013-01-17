@@ -58,7 +58,6 @@ public class XClient {
     }
 
     public String readString() throws IOException {
-        InputStream in = socket.getInputStream();
         byte[] prefix = new byte[6];
         readFully(prefix);
 
