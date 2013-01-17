@@ -1,7 +1,5 @@
 package com.alibaba.study.message.codec;
 
-import java.nio.charset.Charset;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -19,7 +17,6 @@ public class XDecoder extends LengthFieldBasedFrameDecoder {
     private final static int     lengthFieldOffset = 2;
     private final static int     lengthFieldLength = 4;
 
-    private final static Charset UTF8              = Charset.forName("UTF-8");
 
     public XDecoder(){
         super(maxFrameLength, lengthFieldOffset, lengthFieldLength);
@@ -43,7 +40,7 @@ public class XDecoder extends LengthFieldBasedFrameDecoder {
         short tag = frame.readShort();
         int length = frame.readInt();
 
-        String text = frame.toString(TLVConstants.TAG_PREFIX_LENGTH, length, UTF8);
+        String text = frame.toString(TLVConstants.TAG_PREFIX_LENGTH, length, TLVConstants.UTF8);
         return text;
     }
 }

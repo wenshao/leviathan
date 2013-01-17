@@ -101,6 +101,8 @@ public class XServer implements XServerMBean {
         
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
             ctx.sendUpstream(e);
+            
+            String message = (String) e.getMessage();
         }
     }
     
