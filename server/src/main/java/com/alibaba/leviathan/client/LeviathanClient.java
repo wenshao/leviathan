@@ -1,4 +1,4 @@
-package com.alibaba.study.client;
+package com.alibaba.leviathan.client;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -10,18 +10,18 @@ import java.net.Socket;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.alibaba.study.message.TLVConstants;
-import com.alibaba.study.message.codec.Bits;
+import com.alibaba.leviathan.message.TLVConstants;
+import com.alibaba.leviathan.message.codec.Bits;
 
-public class XClient {
+public class LeviathanClient {
 
-    private final static Log  LOG = LogFactory.getLog(XClient.class);
+    private final static Log  LOG = LogFactory.getLog(LeviathanClient.class);
 
     private Socket            socket;
     private final InetAddress address;
     private final int         port;
 
-    public XClient(String address, int port) throws IOException{
+    public LeviathanClient(String address, int port) throws IOException{
         this.address = InetAddress.getByName(address);
         this.port = port;
     }
@@ -90,7 +90,7 @@ public class XClient {
     }
 
     public static void main(String[] args) throws Exception {
-        XClient client = new XClient("127.0.0.1", 7001);
+        LeviathanClient client = new LeviathanClient("127.0.0.1", 7001);
         client.connect();
         client.write("hello world");
 

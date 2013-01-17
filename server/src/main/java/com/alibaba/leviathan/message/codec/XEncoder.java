@@ -1,4 +1,4 @@
-package com.alibaba.study.message.codec;
+package com.alibaba.leviathan.message.codec;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -6,8 +6,8 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 
-import com.alibaba.study.message.TLVConstants;
-import com.alibaba.study.message.XMessage;
+import com.alibaba.leviathan.message.TLVConstants;
+import com.alibaba.leviathan.message.XMessage;
 
 public class XEncoder extends OneToOneEncoder {
 
@@ -24,13 +24,13 @@ public class XEncoder extends OneToOneEncoder {
     }
 
     private Object writeBytes(ChannelHandlerContext ctx, short tag, byte[] bytes) {
-        int len = bytes.length + TLVConstants.TAG_PREFIX_LENGTH;
-        ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer(len, //
+		int buffSize = bytes.length + TLVConstants.TAG_PREFIX_LENGTH;
+        ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer(buffSize, //
                                                                    ctx.getChannel().getConfig().getBufferFactory()//
         );
 
         channelBuffer.writeShort(tag);
-        channelBuffer.writeInt(len);
+        channelBuffer.writeInt(bytes.length);
         channelBuffer.writeBytes(bytes);
         return channelBuffer;
     }

@@ -1,11 +1,14 @@
-package com.alibaba.study.server;
+package com.alibaba.leviathan.server;
 
+import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import javax.management.ObjectName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,12 +23,12 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
-import com.alibaba.study.message.codec.XDecoder;
-import com.alibaba.study.message.codec.XEncoder;
+import com.alibaba.leviathan.message.codec.LeviathanMessageDecoder;
+import com.alibaba.leviathan.message.codec.XEncoder;
 
-public class XServer implements XServerMBean {
+public class LeviathanServer implements LeviathanServerMBean {
 
-    private static Log                    LOG               = LogFactory.getLog(XServer.class);
+    private static Log                    LOG               = LogFactory.getLog(LeviathanServer.class);
 
     private ServerBootstrap               bootstrap;
     private ThreadPoolExecutor            bossExecutor;
@@ -40,6 +43,9 @@ public class XServer implements XServerMBean {
     private final AtomicLong              sessionCount      = new AtomicLong();
     private final AtomicLong              runningMax        = new AtomicLong();
 
+    private LeviathanMessageDecoder       decoder           = new LeviathanMessageDecoder();
+    private XEncoder                      encoder           = new XEncoder();
+
     public void start() {
         bossExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
                                               new SynchronousQueue<Runnable>());
@@ -52,8 +58,8 @@ public class XServer implements XServerMBean {
         bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
 
             public ChannelPipeline getPipeline() throws Exception {
-                return Channels.pipeline(new XEncoder(), //
-                                         new XDecoder(), //
+                return Channels.pipeline(encoder, //
+                                         decoder, //
                                          new NettyServerHanlder() //
                 );
             }
@@ -98,18 +104,19 @@ public class XServer implements XServerMBean {
         public void channelUnbound(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
             ctx.sendUpstream(e);
         }
-        
+
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
             ctx.sendUpstream(e);
-            
+
             String message = (String) e.getMessage();
+            ctx.getChannel().write(message);
         }
     }
-    
+
     void decrementSessionCount() {
         this.sessionCount.decrementAndGet();
     }
-    
+
     void incrementSessionCount() {
         long current = this.sessionCount.incrementAndGet();
         for (;;) {
@@ -124,7 +131,7 @@ public class XServer implements XServerMBean {
             }
         }
     }
-    
+
     public long getSessionCount() {
         return sessionCount.get();
     }
@@ -137,8 +144,17 @@ public class XServer implements XServerMBean {
         return this.acceptedCount.get();
     }
 
+    public long getReceivedBytes() {
+        return this.decoder.getRecevedBytes();
+    }
+
     public static void main(String args[]) throws Exception {
-        XServer server = new XServer();
+        LeviathanServer server = new LeviathanServer();
         server.start();
+
+        ManagementFactory.getPlatformMBeanServer() //
+        .registerMBean(server, //
+                       new ObjectName("com.alibaba.leviathan:type=LeviathanServer") //
+        );
     }
 }

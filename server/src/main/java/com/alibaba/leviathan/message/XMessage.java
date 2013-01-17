@@ -1,4 +1,4 @@
-package com.alibaba.study.message;
+package com.alibaba.leviathan.message;
 
 
 public interface XMessage {
