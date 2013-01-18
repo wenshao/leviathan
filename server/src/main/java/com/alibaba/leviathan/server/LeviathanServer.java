@@ -46,6 +46,8 @@ public class LeviathanServer implements LeviathanServerMBean {
     private LeviathanMessageDecoder       decoder           = new LeviathanMessageDecoder();
     private XEncoder                      encoder           = new XEncoder();
 
+    private int                           port              = 7001;
+
     public void start() {
         bossExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
                                               new SynchronousQueue<Runnable>());
@@ -66,14 +68,21 @@ public class LeviathanServer implements LeviathanServerMBean {
 
         });
 
-        SocketAddress address = new InetSocketAddress("0.0.0.0", 7001);
+        SocketAddress address = new InetSocketAddress("0.0.0.0", port);
         bootstrap.bind(address);
         if (LOG.isInfoEnabled()) {
-            LOG.info("XServer listening " + address);
+            LOG.info("Leviathan Server listening " + address);
         }
 
         if (LOG.isInfoEnabled()) {
-            LOG.info("XServer started.");
+            LOG.info("Leviathan Server started.");
+        }
+    }
+    
+    public void stop() {
+        bootstrap.shutdown();
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Leviathan Server stoped.");
         }
     }
 
