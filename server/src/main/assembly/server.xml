@@ -18,6 +18,11 @@
 			<outputDirectory>/bin</outputDirectory>
 			<filtered>true</filtered>
 		</file>
+		<file>
+			<source>src/main/assembly/bin/startClient.sh</source>
+			<outputDirectory>/bin</outputDirectory>
+			<filtered>true</filtered>
+		</file>
 	</files>
 
 	<dependencySets>
