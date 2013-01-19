@@ -46,9 +46,18 @@ public class LeviathanServer implements LeviathanServerMBean {
     private LeviathanMessageDecoder       decoder           = new LeviathanMessageDecoder();
     private XEncoder                      encoder           = new XEncoder();
 
-    private int                           port              = 7001;
+    private int                           port              = 7002;
 
     public void start() {
+        try {
+            String prop = System.getProperty("leviathan.port");
+            if (prop != null) {
+                port = Integer.parseInt(prop);
+            }
+        } catch (Exception e) {
+            LOG.error("illegal jvm argument leviathan.port", e);
+        }
+        
         bossExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
                                               new SynchronousQueue<Runnable>());
         workerExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
@@ -90,7 +99,7 @@ public class LeviathanServer implements LeviathanServerMBean {
 
         public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) {
             acceptedCount.incrementAndGet();
-            incrementSessionCount();
+            // incrementSessionCount();
 
             if (LOG.isDebugEnabled()) {
                 Channel channel = ctx.getChannel();

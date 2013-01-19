@@ -7,7 +7,7 @@ public class ConcurrentMain {
     public static void main(String[] args) throws Exception {
         LeviathanClient[] clients = new LeviathanClient[1000 * 100];
         for (int i = 0; i < clients.length; ++i) {
-            LeviathanClient client = new LeviathanClient("127.0.0.1", 7001);
+            LeviathanClient client = new LeviathanClient("127.0.0.1", 7002);
             client.connect();
             client.write("hello world");
             client.readString();
