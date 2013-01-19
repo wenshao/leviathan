@@ -90,12 +90,22 @@ public class LeviathanClient {
     }
 
     public static void main(String[] args) throws Exception {
-        LeviathanClient client = new LeviathanClient("127.0.0.1", 7002);
-        client.connect();
-        client.write("hello world");
-
-        String resp = client.readString();
-        System.out.println(resp);
-        client.close();
+        String host = "127.0.0.1";
+        {
+            String prop = System.getProperty("server");
+            if (prop != null && prop.length() > 0) {
+                host = prop;
+            }
+        }
+        
+        LeviathanClient[] clients = new LeviathanClient[1000 * 40];
+        for (int i = 0; i < clients.length; ++i) {
+            LeviathanClient client = new LeviathanClient(host, 7002);
+            client.connect();
+            client.write("hello world");
+            client.readString();
+        }
+        System.out.println("completed.");
+        Thread.sleep(1000 * 1000);
     }
 }
