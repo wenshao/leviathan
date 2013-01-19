@@ -90,7 +90,7 @@ public class LeviathanClient {
     }
 
     public static void main(String[] args) throws Exception {
-        LeviathanClient client = new LeviathanClient("127.0.0.1", 7001);
+        LeviathanClient client = new LeviathanClient("127.0.0.1", 7002);
         client.connect();
         client.write("hello world");
 
