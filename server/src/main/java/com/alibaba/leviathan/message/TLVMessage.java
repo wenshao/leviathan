@@ -1,5 +1,7 @@
 package com.alibaba.leviathan.message;
 
 
-public class TLVMessage {
+public interface TLVMessage {
+    byte[] toBytes();
+    short getTag();
 }

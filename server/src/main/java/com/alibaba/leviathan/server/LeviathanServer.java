@@ -23,8 +23,8 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
-import com.alibaba.leviathan.message.codec.LeviathanMessageDecoder;
-import com.alibaba.leviathan.message.codec.XEncoder;
+import com.alibaba.leviathan.message.codec.LeviathanDecoder;
+import com.alibaba.leviathan.message.codec.LeviathanEncoder;
 
 public class LeviathanServer implements LeviathanServerMBean {
 
@@ -43,8 +43,8 @@ public class LeviathanServer implements LeviathanServerMBean {
     private final AtomicLong              sessionCount      = new AtomicLong();
     private final AtomicLong              runningMax        = new AtomicLong();
 
-    private LeviathanMessageDecoder       decoder           = new LeviathanMessageDecoder();
-    private XEncoder                      encoder           = new XEncoder();
+    private LeviathanDecoder              decoder           = new LeviathanDecoder();
+    private LeviathanEncoder              encoder           = new LeviathanEncoder();
 
     private int                           port              = 7002;
 
@@ -57,7 +57,7 @@ public class LeviathanServer implements LeviathanServerMBean {
         } catch (Exception e) {
             LOG.error("illegal jvm argument leviathan.port", e);
         }
-        
+
         bossExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
                                               new SynchronousQueue<Runnable>());
         workerExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
@@ -87,7 +87,7 @@ public class LeviathanServer implements LeviathanServerMBean {
             LOG.info("Leviathan Server started.");
         }
     }
-    
+
     public void stop() {
         bootstrap.shutdown();
         if (LOG.isInfoEnabled()) {
@@ -98,12 +98,12 @@ public class LeviathanServer implements LeviathanServerMBean {
     public class NettyServerHanlder extends SimpleChannelUpstreamHandler {
 
         public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) {
-            acceptedCount.incrementAndGet();
-            // incrementSessionCount();
+            long acceptedCount = LeviathanServer.this.acceptedCount.incrementAndGet();
+            incrementSessionCount();
 
             if (LOG.isDebugEnabled()) {
                 Channel channel = ctx.getChannel();
-                LOG.debug("accepted " + channel.getRemoteAddress());
+                LOG.debug("accepted " + channel.getRemoteAddress() + " " + acceptedCount);
             }
             ctx.sendUpstream(e);
         }
@@ -164,6 +164,26 @@ public class LeviathanServer implements LeviathanServerMBean {
 
     public long getReceivedBytes() {
         return this.decoder.getRecevedBytes();
+    }
+    
+    public long getReceivedMessageCount() {
+        return this.decoder.getReceivedMessageCount();
+    }
+    
+    public long getSentBytes() {
+        return this.encoder.getSentBytes();
+    }
+    
+    public long getSentMessageCount() {
+        return this.encoder.getSentMessageCount();
+    }
+    
+    public void resetStat() {
+        this.encoder.resetStat();
+        this.decoder.resetStat();
+        
+        this.acceptedCount.set(0);
+        this.closedCount.set(0);
     }
 
     public static void main(String args[]) throws Exception {

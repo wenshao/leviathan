@@ -90,6 +90,7 @@ public class LeviathanClient {
     }
 
     public static void main(String[] args) throws Exception {
+//        String host = "10.20.153.63";
         String host = "127.0.0.1";
         {
             String prop = System.getProperty("server");
@@ -98,7 +99,7 @@ public class LeviathanClient {
             }
         }
         
-        LeviathanClient[] clients = new LeviathanClient[1000 * 40];
+        LeviathanClient[] clients = new LeviathanClient[1];
         for (int i = 0; i < clients.length; ++i) {
             LeviathanClient client = new LeviathanClient(host, 7002);
             client.connect();

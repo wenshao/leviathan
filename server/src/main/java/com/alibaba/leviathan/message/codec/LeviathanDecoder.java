@@ -10,24 +10,33 @@ import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 
 import com.alibaba.leviathan.message.TLVConstants;
-import com.alibaba.leviathan.server.LeviathanServer;
 
-public class LeviathanMessageDecoder extends LengthFieldBasedFrameDecoder {
+public class LeviathanDecoder extends LengthFieldBasedFrameDecoder {
 
-    private final static Log LOG               = LogFactory.getLog(LeviathanMessageDecoder.class);
+    private final static Log LOG                  = LogFactory.getLog(LeviathanDecoder.class);
 
-    private final static int maxFrameLength    = 1024 * 1024;                      // 1m
-    private final static int lengthFieldOffset = 2;
-    private final static int lengthFieldLength = 4;
+    private final static int maxFrameLength       = 1024 * 1024;                              // 1m
+    private final static int lengthFieldOffset    = 2;
+    private final static int lengthFieldLength    = 4;
 
-    private final AtomicLong receivedBytes     = new AtomicLong();
+    private final AtomicLong receivedBytes        = new AtomicLong();
+    private final AtomicLong receivedMessageCount = new AtomicLong();
 
-    public LeviathanMessageDecoder(){
+    public LeviathanDecoder(){
         super(maxFrameLength, lengthFieldOffset, lengthFieldLength);
     }
 
     public long getRecevedBytes() {
         return receivedBytes.get();
+    }
+    
+    public long getReceivedMessageCount() {
+        return receivedMessageCount.get();
+    }
+
+    public void resetStat() {
+        receivedBytes.set(0);
+        receivedMessageCount.set(0);
     }
 
     @Override
@@ -49,6 +58,7 @@ public class LeviathanMessageDecoder extends LengthFieldBasedFrameDecoder {
         int length = frame.readInt();
 
         receivedBytes.addAndGet(length + TLVConstants.TAG_PREFIX_LENGTH);
+        receivedMessageCount.incrementAndGet();
 
         if (tag == TLVConstants.STRING_UTF8) {
             String text = frame.toString(TLVConstants.TAG_PREFIX_LENGTH, length, TLVConstants.UTF8);
